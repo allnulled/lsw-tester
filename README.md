@@ -2,10 +2,12 @@
 
 Test like mocha with ensurer on browser or node.js.
 
+Branch of [@allnulled/universal-tester](https://github.com/allnulled/universal-tester).
+
 ## Installation
 
 ```sh
-npm i -s universal-tester
+npm i -s lsw-tester
 ```
 
 ## Importation
@@ -13,13 +15,13 @@ npm i -s universal-tester
 In node.js:
 
 ```js
-require("@allnulled/universal-tester");
+require("@allnulled/lsw-tester");
 ```
 
 In html:
 
 ```html
-<script src="node_modules/@allnulled/universal-tester/universal-tester.js"></script>
+<script src="node_modules/@allnulled/lsw-tester/universal-tester.js"></script>
 ```
 
 If you want to use [`@allnulled/ensure`](https://github.com/allnulled/ensure) too, import the `universal-tester.bundled.js` version.
