@@ -1,0 +1,14 @@
+{
+  "name": "lsw-tester",
+  "version": "1.0.0",
+  "description": "Tester tool for Lite Starter Webkit.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo 'no test for @allnulled/lsw-tester'",
+    "build": "echo 'no building for @allnulled/lsw-tester'",
+    "versionate": "echo 'no versionate for @allnulled/lsw-tester'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
