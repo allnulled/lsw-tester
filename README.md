@@ -1,4 +1,4 @@
-# universal-tester
+# lsw-tester
 
 Test like mocha with ensurer on browser or node.js.
 
