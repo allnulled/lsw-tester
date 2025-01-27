@@ -2,13 +2,22 @@
   "name": "lsw-tester",
   "version": "1.0.0",
   "description": "Tester tool for Lite Starter Webkit.",
-  "main": "index.js",
+  "main": "universal-tester.js",
+  "bin": {
+    "universal-tester": "universal-tester.bin.js",
+    "universal-test": "universal-tester.bin.js",
+    "u-test": "universal-tester.bin.js",
+    "utest": "universal-tester.bin.js",
+    "ute": "universal-tester.bin.js"
+  },
   "scripts": {
-    "test": "echo 'no test for @allnulled/lsw-tester'",
-    "build": "echo 'no building for @allnulled/lsw-tester'",
+    "dev": "npx nodemon -w universal-tester.js -x 'npm run build'",
+    "build": "npx htmlbundler --list bundlelist.js --output universal-tester.bundled.js --id none --wrap false",
+    "test": "node test.node.js",
+    "test-browser": "npx http-server -c-1 . -o test.html",
     "versionate": "echo 'no versionate for @allnulled/lsw-tester'"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "author": "allnulled",
+  "license": "WTFPL"
 }
