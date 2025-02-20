@@ -12,17 +12,19 @@
         module.exports = mod;
     }
 })(function () {
-    const runQueue = async function (queue, errorHandler) {
+
+    const runQueue = async function (queue, errorHandler, it) {
         Iterating_tests:
         for (const test of queue) {
             try {
                 await test();
             } catch (err) {
+                await it.state.onError(err);
                 if (errorHandler) {
                     try {
                         await errorHandler(err);
-                    } catch (stopExecutionError) {
-                        console.error("Execution halted due to:", stopExecutionError);
+                    } catch (stopExecutionFailure) {
+                        console.error("Execution halted due to:", stopExecutionFailure);
                         break Iterating_tests; // Interrumpir la ejecución de la cola
                     }
                 } else {
@@ -47,7 +49,13 @@
 
     const describe = function (description, callback) {
         const queue = [];
-        const state = { finished: false, onError: null, tests: {}, onlyActivated: false };
+        const state = {
+            finished: false,
+            onFailure: null,
+            onError: null,
+            tests: {},
+            onlyActivated: false
+        };
         const getStateReport = function (last = 0, nonStringified = false) {
             if (!last) {
                 let report = "";
@@ -82,6 +90,10 @@
                 const is_passing = is_on === "pass";
                 const is_failing = is_on === "fail";
                 const is_finished = is_on === "finish";
+                const is_none = !is_starting_suite && !is_starting && !is_passing && !is_failing && !is_finished;
+                if(is_none) {
+                    throw new Error("Situation not managed error 1");
+                }
                 if (is_finished) {
                     state.finished = true;
                 }
@@ -129,15 +141,21 @@
             Object.assign(state.tests[label], { state: "passed", output, took_milliseconds: (new Date()) - state.tests[label].started_at });
             return updateUI("pass", 1, state.tests[label], label);
         };
-        const failTest = (label, error) => {
+        const failTest = async (label, error) => {
+            if(typeof(error) === "object" && (error instanceof describe.SilencedError)) {
+                // Llamamos al onError igualmente, pero no al onFailure:
+                await it.state.onError(error);
+                passTest(label, { name: error.name, message: error.message });
+                return false;
+            }
             Object.assign(state.tests[label], { state: "failed", error, took_milliseconds: (new Date()) - state.tests[label].started_at });
-            return updateUI("fail", 1, state.tests[label], label);
+            updateUI("fail", 1, state.tests[label], label);
+            return true;
         };
-        const it = (label, fn, type = "normal") => {
+        const it = (label, callback, type = "normal") => {
             queue.push(async () => {
                 if (type === "never") return; // Nunca ejecutar "never"
                 if (state.onlyActivated && type !== "only" && type !== "always") return; // Prioridad de only/always
-
                 let timeoutId;
                 const context = {
                     queue,
@@ -148,19 +166,19 @@
                         });
                     }
                 };
-
                 try {
                     startTest(label);
-                    const result = await fn.call(context);
+                    const result = await callback.call(context);
                     passTest(label, result);
                 } catch (err) {
-                    failTest(label, err);
-                    throw err; // Re-lanzar el error para que runQueue lo capture
+                    const trulyFailed = await failTest(label, err);
+                    if(trulyFailed === true) {
+                        throw err; // Re-lanzar el error para que runQueue lo capture
+                    }
                 } finally {
                     clearTimeout(timeoutId); // Limpiar el timeout al finalizar
                 }
             });
-
             if (type === "only") state.onlyActivated = true;
         };
 
@@ -169,6 +187,13 @@
         it.normally = (label, fn) => it(label, fn, "normal");
         it.only = (label, fn) => it(label, fn, "only");
 
+        it.onFailure = (callback) => {
+            state.onFailure = (error) => {
+                callback(error); // Configurar el manejador de fracaso de test
+                return error;
+            };
+        };
+
         it.onError = (callback) => {
             state.onError = (error) => {
                 callback(error); // Configurar el manejador de errores
@@ -176,15 +201,20 @@
             };
         };
 
+        it.describe = describe;
+        it.state = state;
+
         const context = { it };
 
         callback.call(context, context.it);
         updateUI("begin", 0, 0, description);
 
-        return runQueue(queue, state.onError).finally(() => {
+        return runQueue(queue, state.onFailure, it).finally(() => {
             updateUI("finish");
         });
     };
+
+    describe.SilencedError = class extends Error {};
 
     return { describe };
 });

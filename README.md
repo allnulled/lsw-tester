@@ -33,7 +33,7 @@ Once the API is loaded, in any environment you can find `UniversalTester` global
 ```js
 describe("UniversalTester API Test", async function (it) {
 
-  it.onError(function(error) {
+  it.onFailure(function(error) {
     // THIS HALTS THE EXECUTION ON THE FIRST ERROR
     throw error;
   });
@@ -99,9 +99,24 @@ Automatic UI reporting through `data-test` html5 attribute when it matched the `
 To stop the test on the first error, add this line:
 
 ```js
-it.onError(error => throw error);
+it.onFailure(error => throw error);
 ```
 
 ## Things
 
 This is a (bundled) less than 300 lines solution for **testing** and **assertion** that covers most of the topics.
+
+## Extras
+
+You can use `describe.SilencedError` to throw errors that the framework will manage as interruptors, and will call `onError` equally, but not `onFailure`, as a `SilencedError`.
+
+```js
+describe("My API", it => {
+  it("can interrupt with expected-error", () => {
+    // It will still pass the test with this kind of error:
+    throw new describe.SilencedError("This is a good error in a test and will not compute it as failed");
+  });
+});
+```
+
+Pésima lección ética a primera vista, que un error silenciado sea un error y no un fracaso. Pero también es cierto, es así, y sobre errores continuamos el runtime.
